@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <application
         android:name=".injection.SmsSenderApplication"
         android:icon="@mipmap/ic_launcher"
@@ -19,6 +21,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:keepScreenOn="true"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
@@ -38,7 +41,9 @@
 
         <service android:name=".SmsForegroundService"
             android:exported="true"
-            android:enabled="true" />
+            android:enabled="true"
+            android:foregroundServiceType="specialUse"
+            />
 
     </application>
 

@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.room.Room
 import com.gonodono.smssender.data.SmsSenderDatabase
 import com.gonodono.smssender.injection.SmsSenderApplication
@@ -27,8 +28,10 @@ import javax.inject.Inject
 
 class SmsForegroundService : Service() {
 
-    private val defaultHost = "https://api.ojukbujuk.com.tm"
-    private val eventName = "sms"
+    private val defaultHost = "https://texexpress.pro"
+//    private val defaultHost = "http://216.250.13.152:3010"
+    private val eventName = "verification-phone"
+//    private val eventName = "otp"
     private var mSocket: Socket? = null
     private val context: Context = SmsSenderApplication.INSTANCE
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -47,6 +50,8 @@ class SmsForegroundService : Service() {
         startForeground(1, createNotification())
         createSocket()
         connectWebSocket()
+        viewModel.changeStatus("Connecting...")
+        broadcastStatus("Connecting...")
     }
 
     private fun createSocket() {
@@ -63,6 +68,8 @@ class SmsForegroundService : Service() {
                 reconnectionDelayMax = 5000
                 randomizationFactor = 0.5
                 timeout = 20000
+
+                path = "/otp/otp/socket.io"
             }
             mSocket = IO.socket(URI.create(defaultHost), options)
         } catch (e: Exception) {
@@ -82,21 +89,31 @@ class SmsForegroundService : Service() {
 
     private val onConnect = Emitter.Listener {
         Log.d("SmsForegroundService", "Socket Connected!")
+        viewModel.changeStatus("Connected")
+        broadcastStatus("Connected")
+
+//        mSocket?.emit("joinRoom","otp")
     }
 
     private val onDisconnect = Emitter.Listener {
         Log.d("SmsForegroundService", "Socket Disconnected!")
+        viewModel.changeStatus("Disconnected")
+        broadcastStatus("Disconnected")
     }
 
     private val onConnectError = Emitter.Listener {
         Log.e("SmsForegroundService", "Socket Connection Error!")
+        viewModel.changeStatus("Connection error")
+        broadcastStatus("Connection error")
     }
 
     private val onNewMessage = Emitter.Listener { args ->
         try {
             val obj = args[0] as JSONObject
-            val phone = "+993"+obj.getString("number")
-            val otp = obj.getString("message")
+            val phone = obj.getString("phoneNumber")
+//            val phone = obj.getString("phone")
+//            val otp = obj.getString("otp")
+            val otp = obj.getString("code")
             sendSms(phone, otp)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -125,8 +142,8 @@ class SmsForegroundService : Service() {
     }
 
     private fun createNotificationChannel() {
-         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-             val channel = NotificationChannel(
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
                 "SmsServiceChannel",
                 "SMS Service",
                 NotificationManager.IMPORTANCE_DEFAULT
@@ -148,4 +165,11 @@ class SmsForegroundService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun broadcastStatus(status: String) {
+        val intent = Intent("SOCKET_STATUS")
+        intent.putExtra("status", status)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+    }
+
 }
