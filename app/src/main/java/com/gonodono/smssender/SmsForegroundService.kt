@@ -69,7 +69,7 @@ class SmsForegroundService : Service() {
                 randomizationFactor = 0.5
                 timeout = 20000
 
-                path = "/otp/otp/socket.io"
+                //path = "/otp/otp/socket.io"
             }
             mSocket = IO.socket(URI.create(defaultHost), options)
         } catch (e: Exception) {
