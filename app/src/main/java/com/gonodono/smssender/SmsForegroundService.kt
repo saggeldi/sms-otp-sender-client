@@ -28,7 +28,7 @@ import javax.inject.Inject
 
 class SmsForegroundService : Service() {
 
-    private val defaultHost = "http://172.16.18.115:6415"
+    private val defaultHost = "http://216.250.8.128:8000"
 //    private val defaultHost = "http://216.250.13.152:3010"
     private val eventName = "verification-phone"
 //    private val eventName = "otp"
